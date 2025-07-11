@@ -14,5 +14,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id    Int @id @default(autoincrement())
+  phone_number String @unique
+  name String
+  password String
+  chatrooms Chatroom[]
+  subscription SubscriptionTier @default(BASIC)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+model Chatroom {
+  id    Int @id @default(autoincrement())
+  name String
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  messages Message[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+model Message {
+  id    Int @id @default(autoincrement())
+  content String
+  chatroomId Int
+  sender String
+  chatroom Chatroom @relation(fields: [chatroomId], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+enum SubscriptionTier {
+  BASIC
+  PRO
+}
   
 
