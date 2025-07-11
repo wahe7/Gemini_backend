@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const prisma = require("../config/db");
+const bcrypt = require("bcrypt");
 
 const OTP_EXPIRY = 5 * 60 * 1000;
 const OTP_STORE = {};
@@ -76,3 +77,21 @@ exports.forgotPassword = async (req, res) => {
     
     return res.status(200).json({message:"Mocked", otp})
 }
+
+exports.changePassword = async (req, res) => {
+    const {password} = req.body;
+    if(!password){
+      return res.status(400).json({message:"Password is required"})
+    }
+    const user = await prisma.user.findUnique({where:{id: req.user.id}})
+    if(!user){
+      return res.status(404).json({message:"User not found"})
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await prisma.user.update(
+      {where:{id: req.user.id},
+       data:{password: hashedPassword}
+      })
+    return res.status(200).json({message:"Password changed successfully"});
+}
+
