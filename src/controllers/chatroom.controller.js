@@ -1,6 +1,7 @@
 const prisma  = require("../config/db");
 const redis = require("../config/redis.js")
-const geminiQueue = require("../config/geminiQueue");
+// const geminiQueue = require("../config/geminiQueue");
+const geminiReply = require("../jobs/gemini.worker");
 
 exports.createChatroom = async (req, res) => {
     const {name} = req.body;
@@ -89,13 +90,19 @@ exports.sendMessage = async (req, res) => {
             sender: "user"
           }
       })
+      //commnented as we not using queue on production
+      // await geminiQueue.add("generateReply", {
+      //   chatroomId,
+      //   userMessageId: userMessage.id,
+      //   prompt: content
+      // })
 
-      await geminiQueue.add("generateReply", {
+      const reply = await geminiReply({
         chatroomId,
         userMessageId: userMessage.id,
         prompt: content
-      })
-      return res.status(201).json({message:"Message sent successfully", userMessage})
+      });
+      return res.status(201).json({message:"Message sent successfully", userMessage, reply})
     }catch(error){
       return res.status(500).json({message:"Internal server error"})
     }

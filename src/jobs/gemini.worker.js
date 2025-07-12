@@ -8,10 +8,33 @@ const connection = new Redis(process.env.REDIS_URL,{
   maxRetriesPerRequest: null,
 });
 
-const worker = new Worker("gemini-message-queue", async (job) => {
+// const worker = new Worker("gemini-message-queue", async (job) => {
+//   try{
+//     const { chatroomId, userMessageId, prompt } = job.data;
+//     const geminiReply = await generateReply(prompt);
+
+//     await prisma.message.create({
+//         data: {
+//             content: geminiReply,
+//             chatroomId,
+//             sender: "gemini",
+//         },
+//     });
+
+//   }catch(error){
+//     console.log(error);
+//   }
+// }, {
+//     connection,
+// });
+
+const worker = async function geminiReply({chatroomId, userMessageId, prompt}) {
   try{
-    const { chatroomId, userMessageId, prompt } = job.data;
+    console.log(prompt);
     const geminiReply = await generateReply(prompt);
+
+    // Delay message creation by 4 seconds
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     await prisma.message.create({
         data: {
@@ -20,18 +43,18 @@ const worker = new Worker("gemini-message-queue", async (job) => {
             sender: "gemini",
         },
     });
-
+    return geminiReply;
   }catch(error){
     console.log(error);
   }
-}, {
-    connection,
-});
+};
 
-worker.on("completed", (job) => {
-  console.log("Job completed", job.data);
-});
+module.exports = worker;
 
-worker.on("failed", (job) => {
-  console.log("Job failed", job.data);
-});
+// worker.on("completed", (job) => {
+//   console.log("Job completed", job.data);
+// });
+
+// worker.on("failed", (job) => {
+//   console.log("Job failed", job.data);
+// });
